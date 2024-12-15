@@ -3,7 +3,7 @@ clear;
 clf;
 close all;
 format compact
-%aaaaaaaaa
+%druhycomment
 
 %pepa zkouska
 
