@@ -3,6 +3,7 @@ clear;
 clf;
 close all;
 format compact
+%aaaaaaaaa
 
 % At these times, the quadcopter must pass the appropriate waypoint
 timeForWaypointPasage = [140,280,360,480,600]; % [s]
