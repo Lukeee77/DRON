@@ -1,39 +1,60 @@
 classdef PIDRegulator < handle
-    % Example of PID regulator
+    % PIDRegulator implements a simple PID controller
     properties
-       kP 
-       kI 
-       kD
-    end
+        Kp % Proportional gain
+        Ki % Integral gain
+        Kd % Derivative gain
 
-    properties
-       error = 0.0;             % Current error
-       errorSum = 0.0;          % Sum of error
-       prevError = 0.0;         % Previous error
-       currentAction = 0.0;     % Current action
+        previousError % Error in the previous step
+        integralSum   % Cumulative integral of error
+
+        output % Current output of the PID controller
     end
 
     methods
-        % Regulator initiate
+        % Constructor
         function obj = PIDRegulator(Kp, Ki, Kd)
-            obj.kP = Kp;
-            obj.kI = Ki;
-            obj.kD = Kd;
+            obj.Kp = Kp;
+            obj.Ki = Ki;
+            obj.Kd = Kd;
+
+            obj.previousError = 0;
+            obj.integralSum = 0;
+            obj.output = 0;
         end
 
-        % Calculate action
-        function obj = CalculateAction(obj, actualValue, desiredValue, dt)
-            obj.error = desiredValue - actualValue;
-            obj.currentAction = obj.kP * obj.error + ...
-                     obj.kI * obj.errorSum + ...
-                     (obj.kD * (obj.error - obj.prevError) / dt);
-            obj.prevError = obj.error;
-            obj.errorSum = obj.errorSum + obj.error;
+        % Calculate PID action
+        function CalculateAction(obj, currentValue, targetValue, deltaTime)
+            % Compute error
+            error = targetValue - currentValue;
+
+            % Compute proportional term
+            proportional = obj.Kp * error;
+
+            % Compute integral term
+            obj.integralSum = obj.integralSum + error * deltaTime;
+            integral = obj.Ki * obj.integralSum;
+
+            % Compute derivative term
+            derivative = obj.Kd * (error - obj.previousError) / deltaTime;
+
+            % Compute total output
+            obj.output = proportional + integral + derivative;
+
+            % Store current error for next derivative calculation
+            obj.previousError = error;
         end
-    
-        % Get action
-        function action = GetCurrentAction(obj)
-            action = obj.currentAction;
+
+        % Get current action
+        function output = GetCurrentAction(obj)
+            output = obj.output;
+        end
+
+        % Reset the PID controller
+        function Reset(obj)
+            obj.previousError = 0;
+            obj.integralSum = 0;
+            obj.output = 0;
         end
     end
 end

@@ -1,6 +1,6 @@
 function [succesVector] = isWaypointPassed(bodyXYZPosition, actualTime, timeForWaypointPasage, wayPoints, positionTolerance)
 % Inicializace
-succesVector = zeros(height(waypoints),1); % Začínáme s předpokladem, že dron úspěšně prošel všemi branami
+succesVector = zeros(height(wayPoints),1); % Začínáme s předpokladem, že dron úspěšně prošel všemi branami
 numWaypoints = size(wayPoints, 1); % Počet waypointů
 currentWaypointIndex = 1; % Index aktuálního waypointu
 
@@ -9,6 +9,7 @@ currentWaypointIndex = 1; % Index aktuálního waypointu
 for i = 1:numWaypoints
     % Získání cílových souřadnic waypointu
     waypoint = wayPoints(i, :);
+    succesVector
     
     % Kontrola, zda je čas pro tento waypoint platný
     if actualTime > timeForWaypointPasage(i)

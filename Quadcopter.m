@@ -15,6 +15,14 @@ classdef Quadcopter < handle
         
         TotalThrust         % total thrust
         Moments             % [moment1, moment2, moment3]
+
+        % PID Regulators
+        pidX
+        pidY
+        pidZ
+        pidRoll
+        pidPitch
+        pidYaw
     end
     
     methods        
@@ -53,6 +61,17 @@ classdef Quadcopter < handle
             % Initial control vector
             obj.TotalThrust = initInputs(1);
             obj.Moments = initInputs(2:4);
+
+            % Initialize PID Regulators
+            Kp = [1, 1, 2, 1, 1, 1];  % Example gains, should be tuned
+            Ki = [0.1, 0.1, 0.2, 0.1, 0.1, 0.1];
+            Kd = [0.5, 0.5, 1, 0.5, 0.5, 0.5];
+            obj.pidX = PIDRegulator(Kp(1), Ki(1), Kd(1));
+            obj.pidY = PIDRegulator(Kp(2), Ki(2), Kd(2));
+            obj.pidZ = PIDRegulator(Kp(3), Ki(3), Kd(3));
+            obj.pidRoll = PIDRegulator(Kp(4), Ki(4), Kd(4));
+            obj.pidPitch = PIDRegulator(Kp(5), Ki(5), Kd(5));
+            obj.pidYaw = PIDRegulator(Kp(6), Ki(6), Kd(6));
         end
         
         % Returns current state of quadcopter
@@ -118,6 +137,36 @@ classdef Quadcopter < handle
         % Set total thrust control action for current step of simulation
         function obj = TotalThrustControlAction(obj, uTotalThrust) 
             obj.TotalThrust = uTotalThrust;
+        end
+
+        % Position and orientation control (integration of PID control)
+        function ControlAction(obj, targetPosition, targetOrientation)
+            % Get current state
+            currentState = obj.GetState();
+
+            % Position control (X, Y, Z)
+            obj.pidX.CalculateAction(currentState.BodyXYZPosition.X, targetPosition(1), obj.dt);
+            obj.pidY.CalculateAction(currentState.BodyXYZPosition.Y, targetPosition(2), obj.dt);
+            obj.pidZ.CalculateAction(currentState.BodyXYZPosition.Z, targetPosition(3), obj.dt);
+
+            % Desired orientation from position control
+            desiredPhi = obj.pidY.GetCurrentAction();
+            desiredTheta = obj.pidX.GetCurrentAction();
+
+            % Orientation control (Phi, Theta, Psi)
+            obj.pidRoll.CalculateAction(currentState.BodyEulerAngle.Phi, desiredPhi, obj.dt);
+            obj.pidPitch.CalculateAction(currentState.BodyEulerAngle.Theta, desiredTheta, obj.dt);
+            obj.pidYaw.CalculateAction(currentState.BodyEulerAngle.Psi, targetOrientation(3), obj.dt);
+
+            % Control outputs
+            uTotalThrust = obj.pidZ.GetCurrentAction();
+            uMoment1 = obj.pidRoll.GetCurrentAction();
+            uMoment2 = obj.pidPitch.GetCurrentAction();
+            uMoment3 = obj.pidYaw.GetCurrentAction();
+
+            % Apply control actions
+            obj.TotalThrustControlAction(uTotalThrust);
+            obj.AttitudeControlAction(uMoment1, uMoment2, uMoment3);
         end
     end
 end
