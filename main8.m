@@ -62,11 +62,17 @@ quadcopter = Quadcopter(Mass, ...
 % Simulation
 for i = 1 : deltaT : simulationTime
     
-    % Action for total thrust
-    quadcopter.TotalThrustControlAction(0);
-    % Action for attitude
-    quadcopter.AttitudeControlAction(0,0,0);
-   
+    currentWaypointIdx = find(timeForWaypointPasage >= i, 1, 'first');
+    if isempty(currentWaypointIdx)
+        targetPosition = wayPoints(end, :);  % Stay at last waypoint
+    else
+        targetPosition = wayPoints(currentWaypointIdx, :);
+    end
+    targetOrientation = [0, 0, 0];  % Keep yaw (Psi) constant
+
+    % Apply control action
+    quadcopter.ControlAction(targetPosition, targetOrientation);
+
     % Update state of quadcopter
     quadcopter.UpdateState();
 
@@ -78,6 +84,8 @@ for i = 1 : deltaT : simulationTime
         msgbox('Quadcopter Crashed!', 'Error', 'error');
         break;
     end
+    
+    isWaypointPassed(quadcopterActualState.BodyXYZPosition, i * deltaT, timeForWaypointPasage,wayPoints,positionTolerance)
 
     % Waypoint check
     if (CheckWayPointTrack(...
